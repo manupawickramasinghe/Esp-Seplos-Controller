@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Wiring: ESP32 board, RS485 transceiver and Seplos BMS</title>
+  <rect width="960" height="600" fill="#ffffff"/>
+  <text x="480" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#0b3c55">Seplos Controller wiring (ESP-IDF firmware)</text>
+  <text x="480" y="62" text-anchor="middle" font-size="13" fill="#5d6d7e">default pins shown for ESP32-C3 (other boards: see table in the README / menuconfig)</text>
+
+  <!-- ESP32 board -->
+  <rect x="40" y="110" width="220" height="300" rx="12" fill="#1f3b5a"/>
+  <rect x="70" y="128" width="160" height="70" rx="6" fill="#c9d1d9"/>
+  <text x="150" y="160" text-anchor="middle" font-size="15" font-weight="700" fill="#1f3b5a">ESP32-C3</text>
+  <text x="150" y="180" text-anchor="middle" font-size="11" fill="#1f3b5a">SuperMini / LOLIN C3 Mini</text>
+  <g font-size="13" fill="#ffffff" font-weight="600">
+    <text x="236" y="234" text-anchor="end">3V3</text>
+    <text x="236" y="269" text-anchor="end">GND</text>
+    <text x="236" y="304" text-anchor="end">GPIO4  TX</text>
+    <text x="236" y="339" text-anchor="end">GPIO5  RX</text>
+    <text x="236" y="374" text-anchor="end">GPIO6  DE</text>
+  </g>
+  <g fill="#f2cc60"><circle cx="252" cy="230" r="5"/><circle cx="252" cy="265" r="5"/><circle cx="252" cy="300" r="5"/><circle cx="252" cy="335" r="5"/><circle cx="252" cy="370" r="5"/></g>
+  <text x="150" y="400" text-anchor="middle" font-size="11" fill="#c9d1d9">BOOT button = setup portal (hold 5 s)</text>
+
+  <!-- RS485 module -->
+  <rect x="400" y="170" width="200" height="240" rx="10" fill="#1d5fa8"/>
+  <rect x="455" y="250" width="60" height="70" rx="4" fill="#222"/>
+  <text x="485" y="290" text-anchor="middle" font-size="10" fill="#ddd">MAX3485</text>
+  <text x="500" y="196" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">RS485 module</text>
+  <g font-size="13" fill="#ffffff" font-weight="600">
+    <text x="424" y="234">VCC</text>
+    <text x="424" y="269">GND</text>
+    <text x="424" y="304">DI</text>
+    <text x="424" y="339">RO</text>
+    <text x="424" y="374">DE + RE</text>
+    <text x="578" y="269" text-anchor="end">A</text>
+    <text x="578" y="304" text-anchor="end">B</text>
+    <text x="578" y="339" text-anchor="end">GND</text>
+  </g>
+  <g fill="#f2cc60"><circle cx="410" cy="230" r="5"/><circle cx="410" cy="265" r="5"/><circle cx="410" cy="300" r="5"/><circle cx="410" cy="335" r="5"/><circle cx="410" cy="370" r="5"/>
+    <circle cx="590" cy="265" r="5"/><circle cx="590" cy="300" r="5"/><circle cx="590" cy="335" r="5"/></g>
+
+  <!-- wires ESP -> module -->
+  <g stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M257 230 H405" stroke="#d62728"/>
+    <path d="M257 265 H405" stroke="#111111"/>
+    <path d="M257 300 H405" stroke="#e6b800"/>
+    <path d="M257 335 H405" stroke="#2ca02c"/>
+    <path d="M257 370 H405" stroke="#1f77b4"/>
+  </g>
+  <text x="330" y="222" text-anchor="middle" font-size="11" fill="#d62728">3.3 V</text>
+  <text x="330" y="292" text-anchor="middle" font-size="11" fill="#8a6d00">TX → DI</text>
+  <text x="330" y="327" text-anchor="middle" font-size="11" fill="#2ca02c">RX ← RO</text>
+  <text x="330" y="362" text-anchor="middle" font-size="11" fill="#1f77b4">DE and RE bridged</text>
+
+  <!-- RJ45 -->
+  <rect x="740" y="150" width="180" height="230" rx="8" fill="#2b2b2b"/>
+  <rect x="790" y="130" width="80" height="24" rx="3" fill="#2b2b2b"/>
+  <text x="830" y="176" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">Seplos RS485</text>
+  <text x="830" y="194" text-anchor="middle" font-size="11" fill="#bbbbbb">RJ45 socket on the BMS</text>
+  <g font-size="12" fill="#ffffff">
+    <text x="772" y="248">pin 7 / 2 = A</text>
+    <text x="772" y="283">pin 8 / 1 = B</text>
+    <text x="772" y="318">pin 6 / 3 = GND</text>
+    <text x="772" y="353" fill="#bbbbbb">pin 4 / 5 = NC</text>
+  </g>
+  <g fill="#f2cc60"><circle cx="752" cy="244" r="5"/><circle cx="752" cy="279" r="5"/><circle cx="752" cy="314" r="5"/></g>
+  <g stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M595 265 C 670 265, 680 244, 747 244" stroke="#c48a5c"/>
+    <path d="M595 300 C 670 300, 680 279, 747 279" stroke="#7a4b23"/>
+    <path d="M595 335 C 670 335, 680 314, 747 314" stroke="#111111"/>
+  </g>
+  <text x="670" y="236" text-anchor="middle" font-size="11" fill="#7a4b23">A to A</text>
+  <text x="670" y="350" text-anchor="middle" font-size="11" fill="#555">B to B, GND to GND</text>
+
+  <!-- notes -->
+  <rect x="40" y="440" width="880" height="130" rx="10" fill="#f4f6f8" stroke="#d0d7de"/>
+  <g font-size="13" fill="#17202a">
+    <text x="60" y="468" font-weight="700">Notes</text>
+    <text x="60" y="492">• Power the transceiver from 3.3 V. Use a 3.3 V part (MAX3485 / SP3485); a 5 V MAX485 usually works but is out of spec.</text>
+    <text x="60" y="514">• Modules with only RXD/TXD (automatic direction, e.g. XY-017): GPIO4 → TXD, GPIO5 → RXD (not crossed), set DE GPIO to -1 in menuconfig.</text>
+    <text x="60" y="536">• Plug into either RS485 socket of the BMS. DIP switches set the address: all OFF = 0. Parallel packs use consecutive addresses.</text>
+    <text x="60" y="558">• Unplug the controller while using the Seplos BatteryMonitor PC software on the same RS485 port.</text>
+  </g>
+</svg>
