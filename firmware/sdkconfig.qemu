@@ -1,0 +1,11 @@
+# Extra settings for running the firmware in QEMU (esp32 target, open_eth instead of Wi-Fi).
+# Usage: idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.qemu" -B build-qemu set-target esp32 build
+CONFIG_ETH_USE_OPENETH=y
+CONFIG_SEPLOS_QEMU_OPENETH=y
+CONFIG_SEPLOS_UART_TX_GPIO=17
+CONFIG_SEPLOS_UART_RX_GPIO=16
+CONFIG_SEPLOS_RS485_DE_GPIO=-1
+CONFIG_SEPLOS_STATUS_LED_GPIO=-1
+# QEMU reads unconnected GPIOs as low, which would look like a held setup button
+CONFIG_SEPLOS_BOOT_BUTTON_GPIO=-1
+CONFIG_ESP_COREDUMP_ENABLE_TO_NONE=y

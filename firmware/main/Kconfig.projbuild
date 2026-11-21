@@ -1,0 +1,117 @@
+menu "Seplos Controller"
+
+    menu "RS485 / BMS link"
+
+        config SEPLOS_UART_PORT
+            int "UART port"
+            range 1 2
+            default 1
+            help
+                UART used for the RS485 transceiver. UART0 stays the log console.
+
+        config SEPLOS_UART_TX_GPIO
+            int "UART TX GPIO (to transceiver DI / TXD)"
+            default 4 if IDF_TARGET_ESP32C3
+            default 17
+            help
+                ESP32-C3 default: GPIO4. ESP32 / ESP32-S3 default: GPIO17.
+
+        config SEPLOS_UART_RX_GPIO
+            int "UART RX GPIO (from transceiver RO / RXD)"
+            default 5 if IDF_TARGET_ESP32C3
+            default 16 if IDF_TARGET_ESP32
+            default 18
+
+        config SEPLOS_RS485_DE_GPIO
+            int "RS485 DE/RE GPIO (-1 for auto-direction modules)"
+            range -1 48
+            default 6 if IDF_TARGET_ESP32C3
+            default 4 if IDF_TARGET_ESP32
+            default 8
+            help
+                GPIO wired to the bridged DE+RE pins of a MAX485 style module
+                ("RS485 module 2"). The UART drives it automatically in RS485
+                half-duplex mode. Set to -1 for modules with automatic direction
+                control that only have RXD/TXD pins ("RS485 module 1", XY-017).
+
+        config SEPLOS_UART_BAUD
+            int "Baud rate"
+            default 19200
+            help
+                Seplos protocol V2.0 uses 19200 8N1 on the RS485 port.
+
+        config SEPLOS_RESPONSE_TIMEOUT_MS
+            int "Response timeout (ms)"
+            range 100 3000
+            default 500
+
+    endmenu
+
+    menu "Defaults (changeable in the web UI)"
+
+        config SEPLOS_DEFAULT_FIRST_ADDRESS
+            int "First BMS address"
+            range 0 15
+            default 0
+            help
+                Address set with the BMS DIP switches. All switches OFF = 0.
+
+        config SEPLOS_DEFAULT_PACK_COUNT
+            int "Number of packs to poll"
+            range 1 16
+            default 1
+
+        config SEPLOS_DEFAULT_POLL_MS
+            int "Poll interval (ms)"
+            range 500 60000
+            default 1000
+
+        config SEPLOS_AP_PASSWORD
+            string "Setup access point password"
+            default "12345678"
+            help
+                WPA2 password of the "SEPLOS_xxxxxx" setup access point
+                (minimum 8 characters).
+
+    endmenu
+
+    menu "Board"
+
+        config SEPLOS_BOOT_BUTTON_GPIO
+            int "Setup button GPIO (-1 to disable)"
+            range -1 48
+            default 9 if IDF_TARGET_ESP32C3
+            default 0
+            help
+                Holding this button for 5 seconds (or while powering up) starts
+                the setup portal. Defaults to the on-board BOOT button.
+
+        config SEPLOS_STATUS_LED_GPIO
+            int "Status LED GPIO (-1 to disable)"
+            range -1 48
+            default 8 if IDF_TARGET_ESP32C3
+            default 2 if IDF_TARGET_ESP32
+            default -1
+
+        config SEPLOS_STATUS_LED_ACTIVE_LOW
+            bool "Status LED is active low"
+            default y if IDF_TARGET_ESP32C3
+            default n
+
+    endmenu
+
+    config SEPLOS_LEGACY_GET_SHUTDOWN
+        bool "Allow BMS shutdown via HTTP GET /ShutDown (unsafe, legacy)"
+        default n
+        help
+            The original firmware shut the BMS down on a plain GET request.
+            Link prefetchers, crawlers or a stray browser tab can trigger that,
+            so the new firmware requires POST /api/shutdown. Enable only if an
+            existing automation depends on the old URL.
+
+    config SEPLOS_QEMU_OPENETH
+        bool "Use QEMU open_eth network instead of Wi-Fi (testing only)"
+        depends on IDF_TARGET_ESP32 && ETH_USE_OPENETH
+        default n
+
+endmenu
