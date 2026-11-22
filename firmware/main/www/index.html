@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Seplos Controller</title>
+<style>
+:root{
+  --bg:#f4f6f8;--card:#fff;--fg:#17202a;--muted:#5d6d7e;--line:#e3e8ee;--accent:#1f6feb;
+  --good:#1a7f37;--warn:#b08800;--bad:#cf222e;--min:#1f6feb;--max:#cf222e;--bar:#d0d7de;
+  --chip:#eef2f6;--shadow:0 1px 2px rgba(0,0,0,.06),0 1px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0d1117;--card:#161b22;--fg:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#4493f8;
+  --good:#3fb950;--warn:#d29922;--bad:#f85149;--min:#4493f8;--max:#f85149;--bar:#30363d;
+  --chip:#21262d;--shadow:none;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.bar{max-width:1120px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:1.15rem;margin:0;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60vw}
+.sub{color:var(--muted);font-size:.8rem}
+.spacer{flex:1}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--chip);color:var(--fg);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+button:disabled{opacity:.5;cursor:default}
+main{max-width:1120px;margin:0 auto;padding:16px;display:grid;gap:16px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow);min-width:0}
+.card h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:.8rem;font-weight:600;background:var(--chip);color:var(--muted)}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.pill.good{color:var(--good)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}.pill.info{color:var(--accent)}
+.banner{background:var(--accent);color:#fff;border-radius:12px;padding:12px 16px}
+.banner.bad{background:var(--bad)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+@media (max-width:520px){.hero{grid-template-columns:1fr;justify-items:center}}
+.ring{--p:0;--c:var(--good);width:150px;height:150px;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(var(--c) calc(var(--p)*1%),var(--bar) 0)}
+.ring>div{width:118px;height:118px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.ring b{font-size:1.9rem;font-variant-numeric:tabular-nums}
+.ring span{display:block;color:var(--muted);font-size:.75rem}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;width:100%}
+.metric{background:var(--chip);border-radius:10px;padding:10px 12px}
+.metric .k{color:var(--muted);font-size:.75rem}
+.metric .v{font-size:1.25rem;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.metric .v small{font-size:.75rem;color:var(--muted);font-weight:500;margin-left:2px}
+.cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.cell{border:1px solid var(--line);border-radius:8px;padding:6px 6px 8px;text-align:center;position:relative;font-variant-numeric:tabular-nums}
+.cell .i{font-size:.7rem;color:var(--muted)}
+.cell .mv{font-weight:600;font-size:.95rem}
+.cell .b{height:5px;border-radius:3px;background:var(--bar);margin-top:5px;overflow:hidden}
+.cell .b>i{display:block;height:100%;background:var(--good)}
+.cell.min{border-color:var(--min);box-shadow:inset 0 0 0 1px var(--min)}
+.cell.max{border-color:var(--max);box-shadow:inset 0 0 0 1px var(--max)}
+.cell.bal::after{content:"\21C4";position:absolute;top:3px;right:5px;font-size:.7rem;color:var(--warn)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+table{width:100%;border-collapse:collapse}
+td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{color:var(--muted);width:42%;padding-right:10px}
+tr:last-child td{border-bottom:0}
+td code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem;word-break:break-all}
+ul.alarms{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+ul.alarms li{padding:8px 10px;border-radius:8px;background:var(--chip);border-left:4px solid var(--warn)}
+ul.alarms li.prot{border-left-color:var(--bad)}
+ul.alarms li.ok{border-left-color:var(--good)}
+.flags{display:flex;flex-wrap:wrap;gap:6px}
+.flag{padding:3px 9px;border-radius:6px;background:var(--chip);color:var(--muted);font-size:.8rem}
+.flag.on{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good);font-weight:600}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--fg);padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog form,dialog .body{padding:18px}
+dialog h3{margin:0 0 12px;font-size:1.05rem}
+fieldset{border:1px solid var(--line);border-radius:10px;margin:0 0 14px;padding:10px 14px 14px}
+legend{color:var(--muted);font-size:.8rem;padding:0 6px;text-transform:uppercase;letter-spacing:.05em}
+label{display:block;font-size:.85rem;margin:8px 0 3px;color:var(--muted)}
+input,select{width:100%;font:inherit;padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+input[type=checkbox]{width:auto;margin-right:6px}
+label.chk{display:flex;align-items:center;color:var(--fg)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:.78rem;color:var(--muted);margin-top:3px}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
+.scan{display:grid;gap:4px;margin-top:6px;max-height:160px;overflow:auto}
+.scan button{text-align:left;display:flex;justify-content:space-between}
+.msg{margin-top:10px;font-size:.9rem}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--good)}
+progress{width:100%;height:10px}
+footer{color:var(--muted);text-align:center;font-size:.8rem;padding:8px 16px 24px}
+footer a{color:inherit}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div style="min-width:0">
+    <h1 id="title">Seplos Controller</h1>
+    <div class="sub" id="subtitle">connecting…</div>
+  </div>
+  <span class="pill" id="state">—</span>
+  <span class="spacer"></span>
+  <button id="btn-update" type="button">Firmware</button>
+  <button id="btn-settings" type="button" class="primary">Settings</button>
+</div></header>
+
+<main>
+  <div class="banner hidden" id="portal-banner">
+    <b>Setup mode.</b> The controller is running its own access point. Open <b>Settings</b>, enter your Wi-Fi
+    network (and MQTT broker if you use one) and save. The controller restarts and joins your network.
+  </div>
+  <div class="banner bad hidden" id="conn-banner">Lost connection to the controller. Retrying…</div>
+
+  <div class="tabs hidden" id="tabs"></div>
+
+  <section class="card">
+    <div class="hero">
+      <div class="ring" id="ring"><div><div><b id="soc">–</b><span>state of charge</span></div></div></div>
+      <div class="metrics">
+        <div class="metric"><div class="k">Voltage</div><div class="v" id="m-voltage">–</div></div>
+        <div class="metric"><div class="k">Current</div><div class="v" id="m-current">–</div></div>
+        <div class="metric"><div class="k">Power</div><div class="v" id="m-power">–</div></div>
+        <div class="metric"><div class="k">Remaining</div><div class="v" id="m-remaining">–</div></div>
+        <div class="metric"><div class="k">Cycles</div><div class="v" id="m-cycles">–</div></div>
+        <div class="metric"><div class="k">Health</div><div class="v" id="m-soh">–</div></div>
+        <div class="metric"><div class="k">Port voltage</div><div class="v" id="m-port">–</div></div>
+        <div class="metric"><div class="k">Cell spread</div><div class="v" id="m-diff">–</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Cell voltages</h2>
+    <div class="cells" id="cells"></div>
+    <div class="legend">
+      <span><i style="background:var(--min)"></i>lowest <b id="l-min">–</b></span>
+      <span><i style="background:var(--max)"></i>highest <b id="l-max">–</b></span>
+      <span>&#x21C4; balancing</span>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card"><h2>Temperatures</h2><table id="temps"></table></section>
+    <section class="card"><h2>Alarms &amp; protections</h2><ul class="alarms" id="alarms"></ul></section>
+    <section class="card"><h2>BMS status</h2><div class="flags" id="flags"></div>
+      <table style="margin-top:10px"><tbody>
+        <tr><td>Full capacity</td><td id="s-capacity">–</td></tr>
+        <tr><td>Rated capacity</td><td id="s-rated">–</td></tr>
+        <tr><td>Data age</td><td id="s-age">–</td></tr>
+        <tr><td>Polls ok / failed</td><td id="s-polls">–</td></tr>
+      </tbody></table>
+    </section>
+  </div>
+
+  <div class="grid">
+    <section class="card"><h2>Controller</h2><table><tbody>
+      <tr><td>Firmware</td><td id="d-version">–</td></tr>
+      <tr><td>Controller ID</td><td id="d-id">–</td></tr>
+      <tr><td>Online since</td><td id="d-started">–</td></tr>
+      <tr><td>Uptime</td><td id="d-uptime">–</td></tr>
+      <tr><td>Wi-Fi</td><td id="d-wifi">–</td></tr>
+      <tr><td>IP address</td><td id="d-ip">–</td></tr>
+      <tr><td>MQTT</td><td id="d-mqtt">–</td></tr>
+      <tr><td>Free memory</td><td id="d-heap">–</td></tr>
+    </tbody></table></section>
+    <section class="card"><h2>Integration</h2><table><tbody>
+      <tr><td>JSON (all packs)</td><td><code id="u-api">/api/data</code></td></tr>
+      <tr><td>JSON (original format)</td><td><code id="u-legacy">/AllJsonData</code></td></tr>
+      <tr><td>MQTT data</td><td><code id="t-data">–</code></td></tr>
+      <tr><td>MQTT original payload</td><td><code id="t-legacy">–</code></td></tr>
+      <tr><td>MQTT info / status</td><td><code id="t-info">–</code></td></tr>
+      <tr><td>MQTT shutdown</td><td><code id="t-shutdown">–</code></td></tr>
+    </tbody></table></section>
+  </div>
+</main>
+<footer>Seplos Controller · <a href="https://github.com/manupawickramasinghe/Esp-Seplos-Controller">source &amp; docs</a> · based on the ESP8266 original by BavarianSuperGuy</footer>
+
+<dialog id="dlg-settings">
+<form id="f-settings" method="dialog" autocomplete="off">
+  <h3>Settings</h3>
+  <fieldset><legend>General</legend>
+    <label for="name">Battery name</label><input id="name" name="name" maxlength="32" required>
+    <div class="row">
+      <div><label for="hostname">Hostname</label><input id="hostname" name="hostname" maxlength="32" pattern="[A-Za-z0-9-]+"></div>
+      <div><label for="tz">Time zone (POSIX)</label><input id="tz" name="tz" maxlength="64" placeholder="CET-1CEST,M3.5.0,M10.5.0/3"></div>
+    </div>
+  </fieldset>
+  <fieldset><legend>Wi-Fi</legend>
+    <label for="wifi_ssid">Network (SSID)</label>
+    <div style="display:flex;gap:8px"><input id="wifi_ssid" name="wifi_ssid" maxlength="32"><button type="button" id="btn-scan">Scan</button></div>
+    <div class="scan" id="scan"></div>
+    <label for="wifi_pass">Password</label><input id="wifi_pass" name="wifi_pass" type="password" maxlength="64" placeholder="unchanged">
+    <div class="hint">Leave empty to keep the stored password.</div>
+  </fieldset>
+  <fieldset><legend>MQTT</legend>
+    <label for="mqtt_uri">Broker</label><input id="mqtt_uri" name="mqtt_uri" maxlength="128" placeholder="mqtt://192.168.1.10:1883 (empty = off)">
+    <div class="row">
+      <div><label for="mqtt_user">User</label><input id="mqtt_user" name="mqtt_user" maxlength="64"></div>
+      <div><label for="mqtt_pass">Password</label><input id="mqtt_pass" name="mqtt_pass" type="password" maxlength="64" placeholder="unchanged"></div>
+    </div>
+    <label for="mqtt_base">Base topic</label><input id="mqtt_base" name="mqtt_base" maxlength="64">
+    <label class="chk"><input type="checkbox" id="ha" name="ha">Home Assistant auto-discovery</label>
+    <label class="chk"><input type="checkbox" id="remote_shutdown" name="remote_shutdown">Allow BMS shutdown via MQTT</label>
+  </fieldset>
+  <fieldset><legend>BMS</legend>
+    <div class="row">
+      <div><label for="first_addr">First pack address</label><input id="first_addr" name="first_addr" type="number" min="0" max="15"></div>
+      <div><label for="pack_count">Number of packs</label><input id="pack_count" name="pack_count" type="number" min="1" max="16"></div>
+    </div>
+    <div class="hint">Address = BMS DIP switches (all OFF = 0). Parallel packs use consecutive addresses.</div>
+    <label for="poll_ms">Poll interval (ms)</label><input id="poll_ms" name="poll_ms" type="number" min="500" max="60000" step="100">
+  </fieldset>
+  <fieldset><legend>Security</legend>
+    <label for="admin_pass">Admin password (user <code>admin</code>)</label>
+    <input id="admin_pass" name="admin_pass" type="password" maxlength="64" placeholder="not set">
+    <label class="chk"><input type="checkbox" id="admin_pass_clear">Remove admin password</label>
+    <div class="hint">Protects settings, firmware update, restart and shutdown.</div>
+  </fieldset>
+  <div class="msg" id="settings-msg"></div>
+  <div class="actions">
+    <button type="button" id="btn-portal">Restart into setup</button>
+    <button type="button" id="btn-restart">Restart</button>
+    <span class="spacer"></span>
+    <button type="button" data-close>Cancel</button>
+    <button type="submit" class="primary" id="btn-save">Save</button>
+  </div>
+  <fieldset style="margin-top:16px;border-color:var(--bad)"><legend style="color:var(--bad)">Danger zone</legend>
+    <div class="hint" style="margin-bottom:8px">Switches the BMS off, like holding its button. It has to be woken up locally afterwards.</div>
+    <div class="row">
+      <div><label for="sd-addr">Pack</label><select id="sd-addr"></select></div>
+      <div><label for="sd-confirm">Type SHUTDOWN</label><input id="sd-confirm" autocomplete="off"></div>
+    </div>
+    <div class="actions"><button type="button" class="danger" id="btn-shutdown" disabled>Shut down BMS</button></div>
+    <div class="msg" id="sd-msg"></div>
+  </fieldset>
+</form>
+</dialog>
+
+<dialog id="dlg-update"><div class="body">
+  <h3>Firmware update</h3>
+  <p class="sub">Upload <code>seplos_controller.bin</code> built for this chip. The previous firmware is kept and restored automatically if the new one does not start.</p>
+  <input type="file" id="fw" accept=".bin">
+  <progress id="fw-prog" value="0" max="100" class="hidden"></progress>
+  <div class="msg" id="fw-msg"></div>
+  <div class="actions"><button type="button" data-close>Close</button><button type="button" class="primary" id="btn-flash">Upload</button></div>
+</div></dialog>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let data = null, sel = 0, failures = 0, timer = null, pollMs = 1000;
+
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const k in (attrs || {})) {
+    if (k === "class") e.className = attrs[k]; else if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]);
+  }
+  for (const c of kids) e.append(c);
+  return e;
+}
+function setText(id, v) { $(id).textContent = v; }
+function unit(id, v, u, digits) {
+  const n = $(id);
+  if (v === undefined || v === null) { n.textContent = "–"; return; }
+  n.textContent = typeof v === "number" && digits !== undefined ? v.toFixed(digits) : v;
+  if (u) n.append(el("small", { text: u }));
+}
+function dur(s) {
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return (d ? d + "d " : "") + (d || h ? h + "h " : "") + m + "m";
+}
+
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({ cache: "no-store" }, opts || {}));
+  let j = null;
+  try { j = await r.json(); } catch (e) { /* non-JSON (e.g. 401 text) */ }
+  if (!r.ok) throw new Error((j && j.error) || r.status + " " + r.statusText);
+  return j;
+}
+function form(obj) {
+  return { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(obj).toString() };
+}
+
+async function poll() {
+  clearTimeout(timer);
+  try {
+    data = await api("/api/data");
+    failures = 0;
+    $("conn-banner").classList.add("hidden");
+    render();
+    pollMs = Math.max(500, data.device.poll_ms || 1000);
+  } catch (e) {
+    if (++failures >= 3) $("conn-banner").classList.remove("hidden");
+  }
+  if (!document.hidden) timer = setTimeout(poll, pollMs);
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+
+function render() {
+  const d = data.device, packs = data.packs || [];
+  document.title = d.name;
+  setText("title", d.name);
+  setText("subtitle", d.id + (d.wifi.ip ? " · " + d.wifi.ip : ""));
+  $("portal-banner").classList.toggle("hidden", !d.wifi.portal);
+
+  const tabs = $("tabs");
+  tabs.classList.toggle("hidden", packs.length < 2);
+  if (tabs.childElementCount !== packs.length) {
+    tabs.replaceChildren(...packs.map((p, i) => {
+      const b = el("button", { type: "button", text: "Pack " + p.address });
+      b.onclick = () => { sel = i; render(); };
+      return b;
+    }));
+  }
+  [...tabs.children].forEach((b, i) => b.classList.toggle("on", i === sel));
+  if (sel >= packs.length) sel = 0;
+  const p = packs[sel];
+  renderPack(p);
+  renderDevice(d, p);
+}
+
+function renderPack(p) {
+  const st = $("state");
+  if (!p || !p.has_data) {
+    st.className = "pill bad"; st.textContent = p ? "No BMS data" : "No pack";
+    $("cells").replaceChildren(el("div", { class: "sub", text: p ? "Waiting for the BMS: " + p.error : "" }));
+    return;
+  }
+  if (!p.online) { st.className = "pill bad"; st.textContent = "BMS offline"; }
+  else if (p.current > 0.05) { st.className = "pill good"; st.textContent = "Charging"; }
+  else if (p.current < -0.05) { st.className = "pill warn"; st.textContent = "Discharging"; }
+  else { st.className = "pill info"; st.textContent = "Idle"; }
+
+  const ring = $("ring");
+  ring.style.setProperty("--p", Math.max(0, Math.min(100, p.soc)));
+  ring.style.setProperty("--c", p.soc < 30 ? "var(--bad)" : p.soc < 50 ? "var(--warn)" : "var(--good)");
+  $("soc").textContent = p.soc.toFixed(1) + "%";
+
+  unit("m-voltage", p.voltage, "V", 2);
+  unit("m-current", p.current, "A", 2);
+  unit("m-power", Math.round(p.power), "W");
+  unit("m-remaining", p.remaining_ah, "Ah", 1);
+  unit("m-cycles", p.cycles);
+  unit("m-soh", p.soh, "%", 1);
+  unit("m-port", p.port_voltage, "V", 2);
+  unit("m-diff", p.cell_diff_mv, "mV");
+
+  const lo = Math.min(...p.cells), hi = Math.max(...p.cells);
+  const span = Math.max(hi - lo, 0.02), base = lo - span * 0.5, range = span * 2;
+  const bal = new Set(p.balancing || []);
+  const cells = $("cells");
+  if (cells.childElementCount !== p.cells.length || !cells.firstChild.classList.contains("cell")) {
+    cells.replaceChildren(...p.cells.map(() => el("div", { class: "cell" },
+      el("div", { class: "i" }), el("div", { class: "mv" }), el("div", { class: "b" }, el("i")))));
+  }
+  p.cells.forEach((v, i) => {
+    const c = cells.children[i];
+    c.className = "cell" + (i + 1 === p.cell_min_index ? " min" : "") + (i + 1 === p.cell_max_index ? " max" : "") + (bal.has(i + 1) ? " bal" : "");
+    c.children[0].textContent = "Cell " + (i + 1);
+    c.children[1].textContent = v.toFixed(3);
+    c.children[2].firstChild.style.width = Math.max(4, Math.min(100, (v - base) / range * 100)) + "%";
+    c.title = "Cell " + (i + 1) + ": " + v.toFixed(3) + " V";
+  });
+  setText("l-min", p.cell_min_v.toFixed(3) + " V (cell " + p.cell_min_index + ")");
+  setText("l-max", p.cell_max_v.toFixed(3) + " V (cell " + p.cell_max_index + ")");
+
+  const rows = p.temps.cells.map((t, i) => ["Cell sensor " + (i + 1), t]);
+  if (p.temps.ambient !== undefined) rows.push(["Ambient", p.temps.ambient]);
+  if (p.temps.power !== undefined) rows.push(["Power (MOS)", p.temps.power]);
+  $("temps").replaceChildren(...rows.map(([k, v]) => el("tr", {}, el("td", { text: k }), el("td", { text: v.toFixed(1) + " °C" }))));
+
+  const al = $("alarms");
+  if (!p.alarms) al.replaceChildren(el("li", { class: "ok", text: "Alarm data not received yet" }));
+  else if (!p.alarms.length) al.replaceChildren(el("li", { class: "ok", text: "No active alarms" }));
+  else al.replaceChildren(...p.alarms.map((a) => el("li", { class: a.protection ? "prot" : "", text: a.text })));
+
+  const flags = [];
+  if (p.status) {
+    const s = p.status;
+    flags.push(["Charge MOS", s.charge_switch], ["Discharge MOS", s.discharge_switch], ["Charging", s.charging],
+      ["Discharging", s.discharging], ["Float charge", s.float_charge], ["Standby", s.standby],
+      ["Current limit", s.current_limit], ["Heating", s.heating], ["Shut down", s.shutdown]);
+  }
+  $("flags").replaceChildren(...flags.map(([k, v]) => el("span", { class: "flag" + (v ? " on" : ""), text: k })));
+  setText("s-capacity", p.capacity_ah.toFixed(2) + " Ah");
+  setText("s-rated", p.rated_ah.toFixed(2) + " Ah");
+  setText("s-age", p.online ? (p.age_ms / 1000).toFixed(1) + " s" : "offline – " + p.error);
+  setText("s-polls", p.polls_ok + " / " + p.polls_failed);
+}
+
+function renderDevice(d, p) {
+  setText("d-version", d.version + " (IDF " + d.idf + ")");
+  setText("d-id", d.id);
+  setText("d-started", d.started || "time not synced yet");
+  setText("d-uptime", dur(d.uptime_s));
+  setText("d-wifi", d.wifi.portal && !d.wifi.connected ? "setup AP " + d.wifi.ap_ssid : (d.wifi.ssid || "–") + (d.wifi.connected ? " (" + d.wifi.rssi + " dBm)" : " – not connected"));
+  setText("d-ip", d.wifi.ip ? d.wifi.ip + " · " + d.wifi.hostname + ".local" : "–");
+  setText("d-mqtt", !d.mqtt.enabled ? "off" : d.mqtt.connected ? "connected" : "not connected");
+  setText("d-heap", Math.round(d.free_heap / 1024) + " KiB (min " + Math.round(d.min_free_heap / 1024) + " KiB)");
+  const a = p ? p.address : 0, b = d.mqtt.base;
+  setText("u-legacy", "/AllJsonData?address=" + a);
+  setText("t-data", b + "/pack/" + a + "/state");
+  setText("t-legacy", b + "/AllJsonData");
+  setText("t-info", b + "/Info · " + b + "/status");
+  setText("t-shutdown", d.mqtt.remote_shutdown ? b + "/pack/" + a + "/shutdown ← true" : "disabled in settings");
+}
+
+/* ---- settings ---- */
+const dlgS = $("dlg-settings"), dlgU = $("dlg-update");
+document.querySelectorAll("[data-close]").forEach((b) => b.onclick = () => b.closest("dialog").close());
+
+$("btn-settings").onclick = async () => {
+  $("settings-msg").textContent = "";
+  $("sd-msg").textContent = "";
+  try {
+    const c = await api("/api/config");
+    for (const k of ["name", "hostname", "tz", "wifi_ssid", "mqtt_uri", "mqtt_user", "mqtt_base", "first_addr", "pack_count", "poll_ms"]) $(k).value = c[k];
+    $("ha").checked = c.ha; $("remote_shutdown").checked = c.remote_shutdown;
+    $("wifi_pass").value = ""; $("mqtt_pass").value = ""; $("admin_pass").value = "";
+    $("wifi_pass").placeholder = c.wifi_pass_set ? "unchanged" : "not set";
+    $("mqtt_pass").placeholder = c.mqtt_pass_set ? "unchanged" : "not set";
+    $("admin_pass").placeholder = c.admin_pass_set ? "unchanged" : "not set";
+    $("admin_pass_clear").checked = false;
+    $("admin_pass_clear").parentElement.classList.toggle("hidden", !c.admin_pass_set);
+    $("sd-addr").replaceChildren(...((data && data.packs) || []).map((p) => el("option", { value: p.address, text: "Pack " + p.address })));
+    $("sd-confirm").value = "";
+    $("btn-shutdown").disabled = true;
+    dlgS.showModal();
+  } catch (e) { alert("Cannot load settings: " + e.message); }
+};
+
+$("btn-scan").onclick = async () => {
+  const box = $("scan"), btn = $("btn-scan");
+  btn.disabled = true; btn.textContent = "Scanning…";
+  try {
+    const list = await api("/api/scan");
+    list.sort((a, b) => b.rssi - a.rssi);
+    box.replaceChildren(...list.map((n) => {
+      const b = el("button", { type: "button" }, el("span", { text: n.ssid }), el("span", { class: "sub", text: n.rssi + " dBm" + (n.secure ? " 🔒" : "") }));
+      b.onclick = () => { $("wifi_ssid").value = n.ssid; $("wifi_pass").focus(); };
+      return b;
+    }));
+    if (!list.length) box.replaceChildren(el("div", { class: "sub", text: "No networks found" }));
+  } catch (e) { box.replaceChildren(el("div", { class: "msg err", text: e.message })); }
+  btn.disabled = false; btn.textContent = "Scan";
+};
+
+$("f-settings").onsubmit = async (ev) => {
+  ev.preventDefault();
+  const f = new FormData($("f-settings")), o = {};
+  for (const [k, v] of f.entries()) if (k !== "ha" && k !== "remote_shutdown") o[k] = v;
+  o.ha = $("ha").checked ? "1" : "0";
+  o.remote_shutdown = $("remote_shutdown").checked ? "1" : "0";
+  if ($("admin_pass_clear").checked) o.admin_pass_clear = "1";
+  const msg = $("settings-msg");
+  msg.className = "msg"; msg.textContent = "Saving…";
+  try {
+    const r = await api("/api/config", form(o));
+    msg.className = "msg ok";
+    if (r.restart) { msg.textContent = "Saved. The controller restarts now…"; waitForRestart(msg); }
+    else { msg.textContent = "Saved."; setTimeout(() => dlgS.close(), 600); poll(); }
+  } catch (e) { msg.className = "msg err"; msg.textContent = e.message; }
+};
+
+async function restart(portal) {
+  const msg = $("settings-msg");
+  try {
+    await api("/api/restart", form(portal ? { portal: "1" } : {}));
+    msg.className = "msg ok";
+    msg.textContent = portal ? "Restarting into setup mode. Join Wi-Fi \"" + data.device.wifi.ap_ssid + "\" and open http://192.168.4.1/" : "Restarting…";
+    if (!portal) waitForRestart(msg);
+  } catch (e) { msg.className = "msg err"; msg.textContent = e.message; }
+}
+$("btn-restart").onclick = () => restart(false);
+$("btn-portal").onclick = () => { if (confirm("Restart into setup mode? The controller leaves your Wi-Fi until setup is finished.")) restart(true); };
+
+function waitForRestart(msg) {
+  let n = 0;
+  const t = setInterval(async () => {
+    n++;
+    try { await api("/api/data"); if (n > 2) { clearInterval(t); msg.textContent = "Back online."; setTimeout(() => location.reload(), 800); } }
+    catch (e) { if (n > 40) { clearInterval(t); msg.className = "msg err"; msg.textContent = "Controller did not come back here. If you changed Wi-Fi, look for its new address (hostname.local) on your network."; } }
+  }, 1500);
+}
+
+$("sd-confirm").oninput = () => { $("btn-shutdown").disabled = $("sd-confirm").value !== "SHUTDOWN"; };
+$("btn-shutdown").onclick = async () => {
+  const msg = $("sd-msg");
+  try {
+    await api("/api/shutdown", form({ address: $("sd-addr").value, confirm: "SHUTDOWN" }));
+    msg.className = "msg ok"; msg.textContent = "Shutdown command sent.";
+  } catch (e) { msg.className = "msg err"; msg.textContent = e.message; }
+};
+
+/* ---- firmware update ---- */
+$("btn-update").onclick = () => { $("fw-msg").textContent = ""; $("fw-prog").classList.add("hidden"); dlgU.showModal(); };
+$("btn-flash").onclick = () => {
+  const file = $("fw").files[0], msg = $("fw-msg"), prog = $("fw-prog");
+  if (!file) { msg.className = "msg err"; msg.textContent = "Choose a .bin file first."; return; }
+  const x = new XMLHttpRequest();
+  x.open("POST", "/api/ota");
+  x.upload.onprogress = (e) => { if (e.lengthComputable) prog.value = e.loaded / e.total * 100; };
+  x.onload = () => {
+    let r = {}; try { r = JSON.parse(x.responseText); } catch (e) { /* ignore */ }
+    if (x.status === 200) { msg.className = "msg ok"; msg.textContent = "Update installed. Restarting…"; waitForRestart(msg); }
+    else { msg.className = "msg err"; msg.textContent = r.error || ("Upload failed (" + x.status + ")"); }
+  };
+  x.onerror = () => { msg.className = "msg err"; msg.textContent = "Upload failed (connection lost)."; };
+  prog.classList.remove("hidden"); prog.value = 0;
+  msg.className = "msg"; msg.textContent = "Uploading " + Math.round(file.size / 1024) + " KiB…";
+  x.send(file);
+};
+
+poll();
+</script>
+</body>
+</html>

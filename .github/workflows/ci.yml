@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IDF_IMAGE: espressif/idf:v6.1.1
+
+jobs:
+  host-tests:
+    name: Host unit tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Protocol + JSON tests (ASan/UBSan), simulator self-test
+        run: test/host/run_tests.sh
+
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [esp32c3, esp32, esp32s3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/project" -w /project/firmware "$IDF_IMAGE" bash -c '
+            set -e
+            idf.py -B build-${{ matrix.target }} -D SDKCONFIG=build-${{ matrix.target }}/sdkconfig set-target ${{ matrix.target }}
+            idf.py -B build-${{ matrix.target }} -D SDKCONFIG=build-${{ matrix.target }}/sdkconfig build
+            cd build-${{ matrix.target }}
+            esptool --chip ${{ matrix.target }} merge-bin -o seplos-controller-${{ matrix.target }}-full.bin @flash_args
+            cp seplos_controller.bin seplos-controller-${{ matrix.target }}-ota.bin'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seplos-controller-${{ matrix.target }}
+          path: |
+            firmware/build-${{ matrix.target }}/seplos-controller-${{ matrix.target }}-full.bin
+            firmware/build-${{ matrix.target }}/seplos-controller-${{ matrix.target }}-ota.bin
+
+  qemu-e2e:
+    name: QEMU end-to-end
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build QEMU image (esp32 + open_eth)
+        run: |
+          docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/project" -w /project/firmware "$IDF_IMAGE" bash -c '
+            set -e
+            idf.py -B build-qemu -D SDKCONFIG=build-qemu/sdkconfig -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.qemu" set-target esp32
+            idf.py -B build-qemu -D SDKCONFIG=build-qemu/sdkconfig -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.qemu" build'
+      - name: Run end-to-end test
+        run: |
+          mkdir -p e2e-logs
+          OUT="$PWD/e2e-logs" test/qemu/run_e2e.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qemu-e2e-logs
+          path: e2e-logs/*.log
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [host-tests, build, qemu-e2e]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: seplos-controller-*
+          merge-multiple: true
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --generate-notes seplos-controller-*.bin
